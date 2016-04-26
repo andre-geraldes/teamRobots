@@ -14,6 +14,7 @@ public class Squirtle extends TeamRobot
 	 */
 	public void run() {
 		setColors(Color.black,Color.black,Color.black); // body,gun,radar
+		setBulletColor(Color.blue);
 
 		// Robot main loop
 		while(true) {

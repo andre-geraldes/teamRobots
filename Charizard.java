@@ -14,6 +14,7 @@ public class Charizard extends TeamRobot
 	 */
 	public void run() {
 		setColors(Color.black,Color.black,Color.black); // body,gun,radar		
+		setBulletColor(Color.red);		
 
 		// Robot main loop
 		while(true) {

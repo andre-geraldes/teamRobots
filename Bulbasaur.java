@@ -14,6 +14,7 @@ public class Bulbasaur extends TeamRobot
 	 */
 	public void run() {
 		setColors(Color.black,Color.black,Color.black); // body,gun,radar
+		setBulletColor(Color.green);
 
 		// Robot main loop
 		while(true) {
@@ -53,4 +54,8 @@ public class Bulbasaur extends TeamRobot
 		// Replace the next line with any behavior you would like
 		back(20);
 	}	
+	
+	public void onMessageReceived(MessageEvent event) {
+       System.out.println(event.getSender() + " sent me: " + event.getMessage());
+  	}
 }
