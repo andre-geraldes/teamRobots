@@ -1,6 +1,7 @@
 package sample;
 import robocode.*;
 import java.awt.Color;
+import java.awt.Point;
 
 // API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
 
@@ -20,22 +21,24 @@ public class Pikachu extends TeamRobot
 			scan();
 		}
 	}
-	
+
 	public void onScannedRobot(ScannedRobotEvent e) {
 		if(isTeammate(e.getName()) || e.getName().contains("SittingDuck") || e.getName().contains("Rock")){
 		}
 		else {
-			if(e.getEnergy() > 199.0){
-				System.out.println("lider " + e.getName());
-				try	{
-					broadcastMessage(e.getName());
-				}
-				catch(Exception error){
-					System.out.println("ERROR: " + error);
-				}
-				fire(1);
+			// Calculate enemy bearing
+			double enemyBearing = this.getHeading() + e.getBearing();
+			// Calculate enemy's position
+			double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
+			double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
+
+			try {
+				// Send enemy position to teammates
+				broadcastMessage(new Point((int)enemyX, (int)enemyY));
+			} catch (Exception ex) {
+				out.println("Unable to send order: ");
+				ex.printStackTrace(out);
 			}
-			fire(1);
 		}
 	}
 

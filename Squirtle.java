@@ -1,42 +1,48 @@
 package sample;
 import robocode.*;
 import java.awt.Color;
+import java.awt.Point;
+import static robocode.util.Utils.normalRelativeAngleDegrees;
 
 // API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
 
 /**
  * Squirtle - a robot by (your name here)
  */
-public class Squirtle extends TeamRobot
+public class Squirtle extends TeamRobot implements Droid
 {
-	/**
-	 * run: Squirtle's default behavior
-	 */
 	public void run() {
 		setColors(Color.black,Color.black,Color.black); // body,gun,radar
 		setBulletColor(Color.blue);
 
 		// Robot main loop
-		while(true) {
-			// Replace the next 4 lines with any behavior you would like
-			ahead(100);
-			turnGunRight(360);
-			back(100);
-			turnGunRight(360);
-		}
+
 	}
 
 	/**
-	 * onScannedRobot: What to do when you see another robot
+	 * onMessageReceived:  What to do when our leader sends a message
 	 */
-	public void onScannedRobot(ScannedRobotEvent e) {
-		// Replace the next line with any behavior you would like
-		if(isTeammate(e.getName())){
+	public void onMessageReceived(MessageEvent e) {
+		// Fire at a point
+		if (e.getMessage() instanceof Point) {
+			System.out.println("Coordenadas recebidas");
+			Point p = (Point) e.getMessage();
+			// Calculate x and y to target
+			double dx = p.getX() - this.getX();
+			double dy = p.getY() - this.getY();
+			// Calculate angle to target
+			double theta = Math.toDegrees(Math.atan2(dx, dy));
 
+			// Turn gun to target
+			turnGunRight(normalRelativeAngleDegrees(theta - getGunHeading()));
+			// Fire hard!
+			fire(3);
 		}
-		else{
-			fire(1);
-		}
+	}
+
+	public void onBulletMissed(BulletMissedEvent event){
+		turnRight(10);
+		ahead(10);
 	}
 
 	/**
@@ -46,12 +52,12 @@ public class Squirtle extends TeamRobot
 		// Replace the next line with any behavior you would like
 		back(10);
 	}
-	
+
 	/**
 	 * onHitWall: What to do when you hit a wall
 	 */
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
 		back(20);
-	}	
+	}
 }
