@@ -2,6 +2,8 @@ package sample;
 import robocode.*;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 import java.awt.Color;
+import java.awt.Point;
+import java.util.ArrayList;
 
 // API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
 
@@ -10,15 +12,24 @@ import java.awt.Color;
  */
 public class OdoTeam extends TeamRobot
 {
+	private ArrayList<Point> sittingDucks;
+	
 	public void run() {
 		setColors(Color.white,Color.white,Color.white); // body,gun,radar
 		setBulletColor(Color.white);
+		sittingDucks = new ArrayList<Point>();
 
 		// Robot main loop
 		while(true) {
 			//ahead(100);
         	//turnRight(90);
 			turnGunLeft(360);
+			
+			System.out.println("-----------------");
+			if(sittingDucks.size() > 0){
+				for(Point p : sittingDucks)
+					System.out.println(p);
+			}
 		}
 	}
 
@@ -33,6 +44,23 @@ public class OdoTeam extends TeamRobot
 	}
 
 	public void onScannedRobot(ScannedRobotEvent e) {
+		if(e.getName().contains("SittingDuck") || e.getName().contains("Rock")){
+			// Calculate enemy bearing
+			double enemyBearing = this.getHeading() + e.getBearing();
+			// Calculate enemy's position
+			double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
+			double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
+	
+			try {
+				broadcastMessage(new Point((int)enemyX, (int)enemyY));
+				System.out.println("Message sent");
+			} catch (Exception ex) {
+				ex.printStackTrace(out);
+			}
+			
+			sittingDucks.add(new Point((int)enemyX, (int)enemyY));
+		}
+	
 		if (isTeammate(e.getName()) || e.getName().contains("SittingDuck") || e.getName().contains("Rock")) {
 			return;
 		}	
@@ -69,5 +97,17 @@ public class OdoTeam extends TeamRobot
 	public void OnBulletMissed(BulletMissedEvent e) {
 		turnLeft(30);
 		ahead(90);
+	}
+	
+	public void onMessageReceived(MessageEvent e) {
+		System.out.println("Message received from " + e.getSender());
+		if (e.getMessage() instanceof Point) {
+			Point p = (Point) e.getMessage();
+			
+			double dx = p.getX();
+			double dy = p.getY();
+			
+			sittingDucks.add(p);
+		}
 	}
 }
