@@ -11,12 +11,14 @@ import static robocode.util.Utils.normalRelativeAngleDegrees;
  */
 public class Squirtle extends TeamRobot implements Droid
 {
+	private boolean boss = false;
+	private boolean subboss = false;
+	
 	public void run() {
 		setColors(Color.black,Color.black,Color.black); // body,gun,radar
 		setBulletColor(Color.blue);
 
 		// Robot main loop
-
 	}
 
 	/**
@@ -45,13 +47,6 @@ public class Squirtle extends TeamRobot implements Droid
 		ahead(10);
 	}
 
-	/**
-	 * onHitByBullet: What to do when you're hit by a bullet
-	 */
-	public void onHitByBullet(HitByBulletEvent e) {
-		// Replace the next line with any behavior you would like
-		back(10);
-	}
 
 	/**
 	 * onHitWall: What to do when you hit a wall
@@ -60,4 +55,22 @@ public class Squirtle extends TeamRobot implements Droid
 		// Replace the next line with any behavior you would like
 		back(20);
 	}
+
+	public void onHitByBullet(HitByBulletEvent event)
+	{ 	
+		if(boss && subboss){
+		turnGunRight(event.getBearing());
+		fire(1);
+		}
+	}
+	
+	public void onRobotDeath(RobotDeathEvent evnt){
+		if(evnt.getName().contains("Pikachu")){
+			boss = true;
+		}
+		else if(evnt.getName().contains("Charizard")){
+			subboss = true;
+		}
+	}
+
 }

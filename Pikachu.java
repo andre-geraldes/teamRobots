@@ -17,8 +17,9 @@ public class Pikachu extends TeamRobot
 
 		// Robot main loop
 		while(true) {
-			turnGunRight(360);
+			ahead(200);
 			scan();
+			back(200);
 		}
 	}
 
