@@ -3,21 +3,24 @@ import robocode.*;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 import java.awt.Color;
 import java.awt.Point;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.HashMap;
 
 // API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
 
 /**
- * OdoRobot - a robot by andre geraldes
+ * OdoRobot - a robot by andre geraldes and paulo cardoso
  */
-public class OdoTeam extends TeamRobot
+public class CavacoSilva extends TeamRobot
 {
-	private ArrayList<Point> sittingDucks;
+	private HashSet<String> sittingDucks;
+	private HashMap<String, Point> teammates;
 	
 	public void run() {
 		setColors(Color.white,Color.white,Color.white); // body,gun,radar
 		setBulletColor(Color.white);
-		sittingDucks = new ArrayList<Point>();
+		sittingDucks = new HashSet<String>();
+		teammates = new HashMap<String,Point>();
 
 		// Robot main loop
 		while(true) {
@@ -25,10 +28,21 @@ public class OdoTeam extends TeamRobot
         	//turnRight(90);
 			turnGunLeft(360);
 			
-			System.out.println("-----------------");
+			try {
+			broadcastMessage(new Point((int)getX(), (int)getY()));			
+			}
+			catch (Exception e) {}
+			
+			System.out.println("-------- Ducks ---------");
 			if(sittingDucks.size() > 0){
-				for(Point p : sittingDucks)
+				for(String p : sittingDucks)
 					System.out.println(p);
+			}
+			
+			System.out.println("-------- Teammates ---------");
+			if(teammates.size() > 0){
+				for(String name : teammates.keySet())
+					System.out.println("Name: " + name + " Position: " + teammates.get(name).getX() + " " + teammates.get(name).getY());
 			}
 		}
 	}
@@ -37,14 +51,14 @@ public class OdoTeam extends TeamRobot
 		if (robotDistance > 200 || getEnergy() < 15) {
 			fire(2);
 		} else if (robotDistance > 50) {
-			fire(3);
+			fire(2);
 		} else {
-			fire(4);
+			fire(3);
 		}
 	}
 
 	public void onScannedRobot(ScannedRobotEvent e) {
-		if(e.getName().contains("SittingDuck") || e.getName().contains("Rock")){
+		if(e.getName().contains("sample.SittingDuck") || e.getName().contains("sample.Rock")){
 			// Calculate enemy bearing
 			double enemyBearing = this.getHeading() + e.getBearing();
 			// Calculate enemy's position
@@ -52,16 +66,15 @@ public class OdoTeam extends TeamRobot
 			double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
 	
 			try {
-				broadcastMessage(new Point((int)enemyX, (int)enemyY));
-				System.out.println("Message sent");
+				broadcastMessage(new String(e.getName()+ " in x:" +(int)enemyX+" y:"+(int)enemyY));
 			} catch (Exception ex) {
 				ex.printStackTrace(out);
 			}
 			
-			sittingDucks.add(new Point((int)enemyX, (int)enemyY));
+			sittingDucks.add(new String(e.getName()+ " in x:" +(int)enemyX+" y:"+(int)enemyY));
 		}
 	
-		if (isTeammate(e.getName()) || e.getName().contains("SittingDuck") || e.getName().contains("Rock")) {
+		if (isTeammate(e.getName()) || e.getName().contains("sample.SittingDuck") || e.getName().contains("sample.Rock")) {
 			return;
 		}	
 
@@ -100,14 +113,20 @@ public class OdoTeam extends TeamRobot
 	}
 	
 	public void onMessageReceived(MessageEvent e) {
-		System.out.println("Message received from " + e.getSender());
 		if (e.getMessage() instanceof Point) {
 			Point p = (Point) e.getMessage();
 			
-			double dx = p.getX();
-			double dy = p.getY();
-			
-			sittingDucks.add(p);
+			teammates.put(e.getSender(), p);
+		}
+		else if(e.getMessage() instanceof String){
+			String r = (String) e.getMessage();
+			sittingDucks.add(r);
+		}
+	}
+	
+	public void onRobotDeath(RobotDeathEvent e) {
+		if(teammates.containsKey(e.getName())){
+			teammates.remove(e.getName());
 		}
 	}
 }
