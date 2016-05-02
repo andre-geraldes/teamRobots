@@ -13,13 +13,13 @@ import java.util.HashMap;
  */
 public class CavacoSilva extends TeamRobot
 {
-	private HashSet<String> sittingDucks;
+	private HashMap<String, String> sittingDucks;
 	private HashMap<String, Point> teammates;
 	
 	public void run() {
 		setColors(Color.white,Color.white,Color.white); // body,gun,radar
 		setBulletColor(Color.white);
-		sittingDucks = new HashSet<String>();
+		sittingDucks = new HashMap<String, String>();
 		teammates = new HashMap<String,Point>();
 
 		// Robot main loop
@@ -32,18 +32,22 @@ public class CavacoSilva extends TeamRobot
 			broadcastMessage(new Point((int)getX(), (int)getY()));			
 			}
 			catch (Exception e) {}
-			
-			System.out.println("-------- Ducks ---------");
+			System.out.println("-------- BattleField Info ---------");
+			System.out.println("> SittingDucks:");
 			if(sittingDucks.size() > 0){
-				for(String p : sittingDucks)
-					System.out.println(p);
+				for(String p : sittingDucks.keySet())
+					System.out.println("Name: " + p + " Position: " + sittingDucks.get(p));
 			}
 			
-			System.out.println("-------- Teammates ---------");
+			System.out.println("> My position: " + (int)getX() + "," + (int)getY());
+			System.out.println("> Teammates:");
 			if(teammates.size() > 0){
 				for(String name : teammates.keySet())
-					System.out.println("Name: " + name + " Position: " + teammates.get(name).getX() + " " + teammates.get(name).getY());
+					System.out.println("Name: " + name + " Position: " + (int)teammates.get(name).getX() + "," + (int)teammates.get(name).getY());				
 			}
+			System.out.println("------------------------------------");
+			
+			recalcularRota();
 		}
 	}
 
@@ -58,7 +62,7 @@ public class CavacoSilva extends TeamRobot
 	}
 
 	public void onScannedRobot(ScannedRobotEvent e) {
-		if(e.getName().contains("sample.SittingDuck") || e.getName().contains("sample.Rock")){
+		if(e.getName().contains("sample.SittingDuck")){
 			// Calculate enemy bearing
 			double enemyBearing = this.getHeading() + e.getBearing();
 			// Calculate enemy's position
@@ -66,15 +70,15 @@ public class CavacoSilva extends TeamRobot
 			double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
 	
 			try {
-				broadcastMessage(new String(e.getName()+ " in x:" +(int)enemyX+" y:"+(int)enemyY));
+				broadcastMessage(new String(e.getName()+ "|" +(int)enemyX+","+(int)enemyY));
 			} catch (Exception ex) {
 				ex.printStackTrace(out);
 			}
 			
-			sittingDucks.add(new String(e.getName()+ " in x:" +(int)enemyX+" y:"+(int)enemyY));
+			sittingDucks.put(e.getName(), new String((int)enemyX+","+(int)enemyY));
 		}
 	
-		if (isTeammate(e.getName()) || e.getName().contains("sample.SittingDuck") || e.getName().contains("sample.Rock")) {
+		if (isTeammate(e.getName()) || e.getName().contains("sample.SittingDuck")) {
 			return;
 		}	
 
@@ -84,7 +88,7 @@ public class CavacoSilva extends TeamRobot
 		if (Math.abs(bearingFromGun) <= 3) {
 			turnGunRight(bearingFromGun);
 
-			if (getGunHeat() == 0) {
+			if (getGunHeat() == 0 && safeToShoot()) {
 				smartFire(Math.min(3 - Math.abs(bearingFromGun), getEnergy() - .1));
 				ahead(40);
 			}
@@ -120,7 +124,8 @@ public class CavacoSilva extends TeamRobot
 		}
 		else if(e.getMessage() instanceof String){
 			String r = (String) e.getMessage();
-			sittingDucks.add(r);
+			String[] p = r.split("\\|");
+			sittingDucks.put(p[0],p[1]);
 		}
 	}
 	
@@ -128,5 +133,41 @@ public class CavacoSilva extends TeamRobot
 		if(teammates.containsKey(e.getName())){
 			teammates.remove(e.getName());
 		}
+	}
+	
+	public void onBulletHit(BulletHitEvent event) {
+       if(event.getName().contains("sample.SittingDuck")){
+		   turnRight(120);
+		   ahead(200);
+	   }
+   }
+	
+	public void recalcularRota(){
+		if(teammates.size() > 0){
+				for(String name : teammates.keySet()){
+					double x = teammates.get(name).getX();
+					double y = teammates.get(name).getY();
+					double dist = Math.sqrt(Math.pow(this.getX()-x,2) + Math.pow(this.getY()-y,2));	
+					if(dist < 200){
+						turnRight(150);
+						ahead(100);
+					}
+				}
+		}
+	}
+	
+	public boolean safeToShoot(){
+		double ang = this.getHeading();	
+		boolean safe = true;
+		String[] c = null;
+		
+		if(sittingDucks.size() > 0){
+				for(String p : sittingDucks.keySet())
+					c = sittingDucks.get(p).split(",");
+					int x = Integer.parseInt(c[0]);
+					int y = Integer.parseInt(c[1]);
+			}
+
+		return safe;
 	}
 }
